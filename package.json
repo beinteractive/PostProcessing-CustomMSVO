@@ -1,0 +1,8 @@
+{
+    "name": "jp.beinteractive.postprocessing.custommsvo",
+    "displayName": "Post-Processing Custom MSVO",
+    "version": "1.0.0",
+    "unity": "2018.1",
+    "description": "A part of Multi-scale volumetric obscurance in Post-Processing Stack v2",
+    "dependencies": { }
+}
