@@ -53,7 +53,7 @@ namespace CustomMSVO.Internal
         // command buffer warning
         RenderTexture m_AmbientOnlyAO;
 
-        private int m_Downsampling;
+        private float m_Scale;
 
         readonly RenderTargetIdentifier[] m_MRT =
         {
@@ -147,8 +147,8 @@ namespace CustomMSVO.Internal
             var h = camera.pixelHeight;
             
             // Base size
-            m_Widths[0] = w >> m_Downsampling;
-            m_Heights[0] = h >> m_Downsampling;
+            m_Widths[0] = Mathf.RoundToInt(w * m_Scale);
+            m_Heights[0] = Mathf.RoundToInt(h * m_Scale);
 
             // L1 -> L6 sizes
             for (int i = 1; i < 7; i++)
@@ -431,14 +431,12 @@ namespace CustomMSVO.Internal
 
         void PrepareDownsamping(PostProcessRenderContext context)
         {
+            m_Scale = m_Settings.renderScale;
+            
             var resolution = context.width * context.height;
             if (resolution > m_Settings.downsampleThreshold.value)
             {
-                m_Downsampling = m_Settings.downsample.value - 1;
-            }
-            else
-            {
-                m_Downsampling = 0;
+                m_Scale *= m_Settings.downsample.value;
             }
         }
 
@@ -453,8 +451,8 @@ namespace CustomMSVO.Internal
 
         void CheckAOTexture(PostProcessRenderContext context)
         {
-            var w = context.width >> m_Downsampling;
-            var h = context.height >> m_Downsampling;
+            var w = Mathf.RoundToInt(context.width * m_Scale);
+            var h = Mathf.RoundToInt(context.height * m_Scale);
             
             if (m_AmbientOnlyAO == null || !m_AmbientOnlyAO.IsCreated() || m_AmbientOnlyAO.width != w || m_AmbientOnlyAO.height != h)
             {

@@ -21,10 +21,13 @@ namespace CustomMSVO
         [ColorUsage(false), Tooltip("Custom color to use for the ambient occlusion.")]
         public ColorParameter color = new ColorParameter { value = Color.black };
 
+        [Range(0.1f, 1f)]
+        public FloatParameter renderScale = new FloatParameter { value = 1f };
+
         public IntParameter downsampleThreshold = new IntParameter { value = 1100000 };
 
-        [Range(1, 10)]
-        public IntParameter downsample = new IntParameter { value = 1 };
+        [Range(0.1f, 1f)]
+        public FloatParameter downsample = new FloatParameter { value = 1f };
 
         [Range(-8f, 0f)]
         public FloatParameter noiseFilterTolerance = new FloatParameter { value = 0f }; // Hidden
