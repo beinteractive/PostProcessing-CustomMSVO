@@ -53,6 +53,8 @@ namespace CustomMSVO.Internal
         // command buffer warning
         RenderTexture m_AmbientOnlyAO;
 
+        private int m_Downsampling;
+
         readonly RenderTargetIdentifier[] m_MRT =
         {
             BuiltinRenderTextureType.GBuffer0,    // Albedo, Occ
@@ -141,14 +143,12 @@ namespace CustomMSVO.Internal
 
         public void GenerateAOMap(CommandBuffer cmd, Camera camera, RenderTargetIdentifier destination, RenderTargetIdentifier? depthMap, bool invert)
         {
-            var downsample = m_Settings.downsample.value - 1;
-
             var w = camera.pixelWidth * (RuntimeUtilities.isSinglePassStereoEnabled ? 2 : 1);
             var h = camera.pixelHeight;
             
             // Base size
-            m_Widths[0] = w >> downsample;
-            m_Heights[0] = h >> downsample;
+            m_Widths[0] = w >> m_Downsampling;
+            m_Heights[0] = h >> m_Downsampling;
 
             // L1 -> L6 sizes
             for (int i = 1; i < 7; i++)
@@ -429,6 +429,19 @@ namespace CustomMSVO.Internal
             /**/
         }
 
+        void PrepareDownsamping(PostProcessRenderContext context)
+        {
+            var resolution = context.width * context.height;
+            if (resolution > m_Settings.downsampleThreshold.value)
+            {
+                m_Downsampling = m_Settings.downsample.value - 1;
+            }
+            else
+            {
+                m_Downsampling = 0;
+            }
+        }
+
         void PreparePropertySheet(PostProcessRenderContext context)
         {
             m_PropertySheet = context.propertySheets.Get(m_Resources.shaders.multiScaleAO);
@@ -440,9 +453,8 @@ namespace CustomMSVO.Internal
 
         void CheckAOTexture(PostProcessRenderContext context)
         {
-            var downsample = m_Settings.downsample.value - 1;
-            var w = context.width >> downsample;
-            var h = context.height >> downsample;
+            var w = context.width >> m_Downsampling;
+            var h = context.height >> m_Downsampling;
             
             if (m_AmbientOnlyAO == null || !m_AmbientOnlyAO.IsCreated() || m_AmbientOnlyAO.width != w || m_AmbientOnlyAO.height != h)
             {
@@ -469,6 +481,7 @@ namespace CustomMSVO.Internal
             var cmd = context.command;
             cmd.BeginSample("Ambient Occlusion");
             SetResources(context.resources);
+            PrepareDownsamping(context);
             PreparePropertySheet(context);
             CheckAOTexture(context);
 
