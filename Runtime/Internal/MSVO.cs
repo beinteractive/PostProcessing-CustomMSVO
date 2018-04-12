@@ -11,7 +11,7 @@ namespace CustomMSVO.Internal
     [Serializable]
     public sealed class MSVO
     {
-        internal enum MipLevel { Original, L1, L2, L3, L4, L5, L6 }
+        internal enum MipLevel { Original, L1, L2, L3, L4 /* , L5, L6 */ }
 
         enum Pass
         {
@@ -46,6 +46,7 @@ namespace CustomMSVO.Internal
 
         MultiScaleVolumetricObscurance m_Settings;
         PropertySheet m_PropertySheet;
+        PropertySheet m_CompositionPropertySheet;
         PostProcessResources m_Resources;
 
         // Can't use a temporary because we need to share it between cmdbuffers - also fixes a weird
@@ -166,12 +167,20 @@ namespace CustomMSVO.Internal
             float tanHalfFovH = CalculateTanHalfFovHeight(camera);
             PushRenderCommands(cmd, ShaderIDs.TiledDepth1, ShaderIDs.Occlusion1, GetSizeArray(MipLevel.L3), tanHalfFovH);
             PushRenderCommands(cmd, ShaderIDs.TiledDepth2, ShaderIDs.Occlusion2, GetSizeArray(MipLevel.L4), tanHalfFovH);
+            
+            /**
             PushRenderCommands(cmd, ShaderIDs.TiledDepth3, ShaderIDs.Occlusion3, GetSizeArray(MipLevel.L5), tanHalfFovH);
             PushRenderCommands(cmd, ShaderIDs.TiledDepth4, ShaderIDs.Occlusion4, GetSizeArray(MipLevel.L6), tanHalfFovH);
+            /**/
 
+            /**
             PushUpsampleCommands(cmd, ShaderIDs.LowDepth4, ShaderIDs.Occlusion4, ShaderIDs.LowDepth3,   ShaderIDs.Occlusion3, ShaderIDs.Combined3, GetSize(MipLevel.L4), GetSize(MipLevel.L3));
             PushUpsampleCommands(cmd, ShaderIDs.LowDepth3, ShaderIDs.Combined3,  ShaderIDs.LowDepth2,   ShaderIDs.Occlusion2, ShaderIDs.Combined2, GetSize(MipLevel.L3), GetSize(MipLevel.L2));
             PushUpsampleCommands(cmd, ShaderIDs.LowDepth2, ShaderIDs.Combined2,  ShaderIDs.LowDepth1,   ShaderIDs.Occlusion1, ShaderIDs.Combined1, GetSize(MipLevel.L2), GetSize(MipLevel.L1));
+            PushUpsampleCommands(cmd, ShaderIDs.LowDepth1, ShaderIDs.Combined1,  ShaderIDs.LinearDepth, null,                 destination,         GetSize(MipLevel.L1), GetSize(MipLevel.Original), invert);
+            /**/
+            
+            PushUpsampleCommands(cmd, ShaderIDs.LowDepth2, ShaderIDs.Occlusion2, ShaderIDs.LowDepth1,   ShaderIDs.Occlusion1, ShaderIDs.Combined1, GetSize(MipLevel.L2), GetSize(MipLevel.L1));
             PushUpsampleCommands(cmd, ShaderIDs.LowDepth1, ShaderIDs.Combined1,  ShaderIDs.LinearDepth, null,                 destination,         GetSize(MipLevel.L1), GetSize(MipLevel.Original), invert);
 
             // Cleanup
@@ -184,22 +193,30 @@ namespace CustomMSVO.Internal
 
             Alloc(cmd, ShaderIDs.LowDepth1, MipLevel.L1, RenderTextureFormat.RFloat, true);
             Alloc(cmd, ShaderIDs.LowDepth2, MipLevel.L2, RenderTextureFormat.RFloat, true);
+            /**
             Alloc(cmd, ShaderIDs.LowDepth3, MipLevel.L3, RenderTextureFormat.RFloat, true);
             Alloc(cmd, ShaderIDs.LowDepth4, MipLevel.L4, RenderTextureFormat.RFloat, true);
+            /**/
 
             AllocArray(cmd, ShaderIDs.TiledDepth1, MipLevel.L3, RenderTextureFormat.RHalf, true);
             AllocArray(cmd, ShaderIDs.TiledDepth2, MipLevel.L4, RenderTextureFormat.RHalf, true);
+            /**
             AllocArray(cmd, ShaderIDs.TiledDepth3, MipLevel.L5, RenderTextureFormat.RHalf, true);
             AllocArray(cmd, ShaderIDs.TiledDepth4, MipLevel.L6, RenderTextureFormat.RHalf, true);
+            /**/
 
             Alloc(cmd, ShaderIDs.Occlusion1, MipLevel.L1, RenderTextureFormat.R8, true);
             Alloc(cmd, ShaderIDs.Occlusion2, MipLevel.L2, RenderTextureFormat.R8, true);
+            /**
             Alloc(cmd, ShaderIDs.Occlusion3, MipLevel.L3, RenderTextureFormat.R8, true);
             Alloc(cmd, ShaderIDs.Occlusion4, MipLevel.L4, RenderTextureFormat.R8, true);
+            /**/
 
             Alloc(cmd, ShaderIDs.Combined1, MipLevel.L1, RenderTextureFormat.R8, true);
+            /**
             Alloc(cmd, ShaderIDs.Combined2, MipLevel.L2, RenderTextureFormat.R8, true);
             Alloc(cmd, ShaderIDs.Combined3, MipLevel.L3, RenderTextureFormat.R8, true);
+            /**/
         }
 
         void PushDownsampleCommands(CommandBuffer cmd, Camera camera, RenderTargetIdentifier? depthMap)
@@ -245,6 +262,7 @@ namespace CustomMSVO.Internal
             if (needDepthMapRelease)
                 Release(cmd, ShaderIDs.DepthCopy);
 
+            /**
             // 2nd downsampling pass.
             cs = m_Resources.computeShaders.multiScaleAODownsample2;
             kernel = cs.FindKernel("main");
@@ -256,6 +274,7 @@ namespace CustomMSVO.Internal
             cmd.SetComputeTextureParam(cs, kernel, "DS16xAtlas", ShaderIDs.TiledDepth4);
 
             cmd.DispatchCompute(cs, kernel, m_Widths[(int)MipLevel.L6], m_Heights[(int)MipLevel.L6], 1);
+            /**/
         }
 
         void PushRenderCommands(CommandBuffer cmd, int source, int destination, Vector3 sourceSize, float tanHalfFovH)
@@ -391,25 +410,32 @@ namespace CustomMSVO.Internal
 
             Release(cmd, ShaderIDs.TiledDepth1);
             Release(cmd, ShaderIDs.TiledDepth2);
+            /**
             Release(cmd, ShaderIDs.TiledDepth3);
             Release(cmd, ShaderIDs.TiledDepth4);
+            /**/
 
             Release(cmd, ShaderIDs.Occlusion1);
             Release(cmd, ShaderIDs.Occlusion2);
+            /**
             Release(cmd, ShaderIDs.Occlusion3);
             Release(cmd, ShaderIDs.Occlusion4);
+            /**/
 
             Release(cmd, ShaderIDs.Combined1);
+            /**
             Release(cmd, ShaderIDs.Combined2);
             Release(cmd, ShaderIDs.Combined3);
+            /**/
         }
 
         void PreparePropertySheet(PostProcessRenderContext context)
         {
-            var sheet = context.propertySheets.Get(m_Resources.shaders.multiScaleAO);
-            sheet.ClearKeywords();
-            sheet.properties.SetVector(ShaderIDs.AOColor, Color.white - m_Settings.color.value);
-            m_PropertySheet = sheet;
+            m_PropertySheet = context.propertySheets.Get(m_Resources.shaders.multiScaleAO);
+            m_PropertySheet.ClearKeywords();
+
+            m_CompositionPropertySheet = context.propertySheets.Get(Shader.Find("Hidden/PostProcessing/Custom/MSVO"));
+            m_CompositionPropertySheet.properties.SetVector(ShaderIDs.AOColor, Color.white - m_Settings.color.value);
         }
 
         void CheckAOTexture(PostProcessRenderContext context)
@@ -450,8 +476,8 @@ namespace CustomMSVO.Internal
             // to apply it to AO as well or it'll drawn on top of the fog effect.
             if (context.camera.actualRenderingPath == RenderingPath.Forward && RenderSettings.fog)
             {
-                m_PropertySheet.EnableKeyword("APPLY_FORWARD_FOG");
-                m_PropertySheet.properties.SetVector(
+                m_CompositionPropertySheet.EnableKeyword("APPLY_FORWARD_FOG");
+                m_CompositionPropertySheet.properties.SetVector(
                     ShaderIDs.FogParams,
                     new Vector3(RenderSettings.fogDensity, RenderSettings.fogStartDistance, RenderSettings.fogEndDistance)
                 );
@@ -460,8 +486,7 @@ namespace CustomMSVO.Internal
             GenerateAOMap(cmd, context.camera, m_AmbientOnlyAO, null, false);
             PushDebug(context);
             cmd.SetGlobalTexture(ShaderIDs.MSVOcclusionTexture, m_AmbientOnlyAO);
-            cmd.BlitFullscreenTriangle(context.source, context.destination);
-            cmd.BlitFullscreenTriangle(BuiltinRenderTextureType.None, context.destination, m_PropertySheet, (int)Pass.CompositionForward);
+            cmd.BlitFullscreenTriangle(context.source, context.destination, m_CompositionPropertySheet, 0);
             cmd.EndSample("Ambient Occlusion");
         }
 
