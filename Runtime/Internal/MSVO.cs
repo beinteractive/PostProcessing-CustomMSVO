@@ -55,11 +55,13 @@ namespace CustomMSVO.Internal
 
         private float m_Scale;
 
+        /**
         readonly RenderTargetIdentifier[] m_MRT =
         {
             BuiltinRenderTextureType.GBuffer0,    // Albedo, Occ
             BuiltinRenderTextureType.CameraTarget // Ambient
         };
+        /**/
 
         public MSVO(MultiScaleVolumetricObscurance settings)
         {
