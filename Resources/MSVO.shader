@@ -25,6 +25,7 @@ Shader "Hidden/PostProcessing/Custom/MSVO"
 
                 #pragma multi_compile _ APPLY_FORWARD_FOG
                 #pragma multi_compile _ FOG_LINEAR FOG_EXP FOG_EXP2
+                #pragma multi_compile _ CUSTOM_COMPOSITION
                 #pragma vertex VertDefault
                 #pragma fragment Frag
 
@@ -33,9 +34,6 @@ Shader "Hidden/PostProcessing/Custom/MSVO"
                     float4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.texcoord);
                     half ao = 1.0 - SAMPLE_TEXTURE2D(_MSVOcclusionTexture, sampler_MSVOcclusionTexture, i.texcoordStereo).r;
                     
-                    // ao = ao * ao;
-                    // ao = smoothstep(0.0, 0.7, ao);
-
                     // Apply fog when enabled (forward-only)
                 #if (APPLY_FORWARD_FOG)
                     float d = Linear01Depth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, sampler_CameraDepthTexture, i.texcoordStereo));
@@ -43,9 +41,11 @@ Shader "Hidden/PostProcessing/Custom/MSVO"
                     ao *= ComputeFog(d);
                 #endif
                     
-                    // color.rgb = (1.0).xxx;
-                
+                    #ifdef CUSTOM_COMPOSITION
+                    return float4((color.rgb + ((1.0).xxx - _AOColor) * ao) * (1.0 - ao), color.a);
+                    #else
                     return float4(color.rgb * ((1.0).xxx - ao * _AOColor), color.a);
+                    #endif
                 }
 
             ENDHLSL

@@ -37,6 +37,8 @@ namespace CustomMSVO
 
         [Range(-12f, -1f)]
         public FloatParameter upsampleTolerance = new FloatParameter { value = -12f }; // Hidden
+
+        public BoolParameter UseCustomComposition = new BoolParameter { value = false };
         
         // SRPs can call this method without a context set (see HDRP)
         // We need a better way to handle this than checking for a null context, context should

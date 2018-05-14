@@ -449,6 +449,12 @@ namespace CustomMSVO.Internal
 
             m_CompositionPropertySheet = context.propertySheets.Get(Shader.Find("Hidden/PostProcessing/Custom/MSVO"));
             m_CompositionPropertySheet.properties.SetVector(ShaderIDs.AOColor, Color.white - m_Settings.color.value);
+            m_CompositionPropertySheet.ClearKeywords();
+
+            if (m_Settings.UseCustomComposition)
+            {
+                m_CompositionPropertySheet.EnableKeyword("CUSTOM_COMPOSITION");
+            }
         }
 
         void CheckAOTexture(PostProcessRenderContext context)
