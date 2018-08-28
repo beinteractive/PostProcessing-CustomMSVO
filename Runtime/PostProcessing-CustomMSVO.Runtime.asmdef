@@ -1,7 +1,7 @@
 ﻿{
 	"name": "PostProcessing-CustomMSVO.Runtime",
 	"references": [
-			"com.unity.render-pipelines.core.Runtime",
-			"com.unity.postprocessing.Runtime"
+		"Unity.Postprocessing.Runtime",
+		"Unity.RenderPipelines.Core.Runtime"
 	]
 }
